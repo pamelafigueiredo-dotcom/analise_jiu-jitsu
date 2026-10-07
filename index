@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tatame IA · Análise de Jiu-Jitsu</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500&display=swap">
+<style>
+:root{--bg:#0a0e13;--panel:#111823;--panel2:#16202e;--line:#212e3f;--ink:#e8eef5;--mut:#8795a8;--good:#3ddc97;--bad:#ff5d5d;--warn:#ffb02e;--acc:#5ac8fa;
+--h:'Barlow Semi Condensed','Arial Narrow',system-ui,sans-serif;--b:'Barlow',system-ui,sans-serif;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);color-scheme:dark}
+*,*:before,*:after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 var(--b)}
+h1,h2,h3{font-family:var(--h);margin:0;letter-spacing:.01em}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+h1{font-size:30px;font-weight:700}
+.sub{color:var(--mut);font-size:14px;margin:2px 0 0}
+.tabs{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px}
+.tabs button{font:600 15px var(--h);color:var(--mut);background:none;border:0;padding:8px 16px;border-radius:8px;cursor:pointer}
+.tabs button[aria-pressed=true]{background:var(--panel2);color:var(--ink)}
+button:focus-visible,input:focus-visible,label:focus-within{outline:2px solid var(--acc);outline-offset:2px}
+.main{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:16px}
+@media(max-width:860px){.main{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+.stage{position:relative;aspect-ratio:16/9;background:#070a0e;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.stage canvas,.stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.toast{position:absolute;left:10px;right:10px;bottom:10px;padding:8px 12px;border-radius:8px;font:600 15px var(--h);background:rgba(10,14,19,.88);border-left:4px solid var(--mut);opacity:0;transition:opacity .2s}
+.toast.on{opacity:1}
+.ctrl{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.btn{font:600 15px var(--h);border:1px solid var(--line);background:var(--panel2);color:var(--ink);padding:9px 16px;border-radius:8px;cursor:pointer}
+.btn.pri{background:var(--acc);color:#04202e;border-color:var(--acc)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.time{font:600 15px var(--h);color:var(--mut);margin-left:auto;font-variant-numeric:tabular-nums}
+.tl{position:relative;height:34px;margin-top:14px;border-radius:6px;background:var(--panel2);cursor:pointer;overflow:visible}
+.seg{position:absolute;top:0;bottom:0;opacity:.55}
+.mk{position:absolute;top:-5px;width:12px;height:12px;margin-left:-6px;border-radius:50%;border:2px solid var(--panel);padding:0;cursor:pointer}
+.ph{position:absolute;top:-4px;bottom:-4px;width:2px;background:#fff;pointer-events:none}
+.leg{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:13px;color:var(--mut)}
+.leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.prog{display:none;margin-top:14px}
+.prog.on{display:block}
+.bar{height:6px;background:var(--panel2);border-radius:3px;overflow:hidden;margin-top:6px}
+.bar>div{height:100%;width:0;background:var(--acc);transition:width .2s}
+.note{font-size:13px;color:var(--mut);margin-top:12px}
+.empty{color:var(--mut);padding:8px 0}
+#rep{display:none;margin-top:16px}
+#rep.on{display:block}
+.score{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}
+.kpi{background:var(--panel2);border-radius:10px;padding:10px 12px}
+.kpi b{display:block;font:700 28px var(--h)}
+.kpi span{font-size:13px;color:var(--mut)}
+.big{font:700 64px/1 var(--h)}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.col h2{font-size:22px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.col h2 em{font:600 14px var(--b);font-style:normal;color:var(--mut)}
+.col.g{border-top:3px solid var(--good)}.col.r{border-top:3px solid var(--bad)}.col.w{border-top:3px solid var(--warn)}
+.it{width:100%;text-align:left;background:var(--panel2);border:1px solid transparent;color:var(--ink);border-radius:10px;padding:11px 12px;margin-bottom:8px;cursor:pointer;font:inherit}
+.it:hover,.it.act{border-color:var(--mut)}
+.it .t{font:600 13px var(--h);color:var(--mut);font-variant-numeric:tabular-nums}
+.it strong{display:block;font:600 17px var(--h);margin:1px 0 3px}
+.it p{margin:0;font-size:14px;color:#c4cfdc}
+.it .fix{margin-top:6px;font-size:13px;color:var(--ink)}
+.it .fix:before{content:"Como corrigir: ";color:var(--mut)}
+.sev{display:inline-block;font:700 12px var(--h);padding:1px 8px;border-radius:99px;margin-left:6px;color:#1b1200}
+.row2{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;margin-top:16px}
+@media(max-width:860px){.row2{grid-template-columns:1fr}}
+.row2 h2{font-size:20px;margin-bottom:8px}
+svg text{fill:var(--mut);font:12px var(--b)}
+.pb{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:14px}
+.pb span:first-child{width:92px;flex:none}
+.pb .tr{flex:1;height:10px;background:var(--panel2);border-radius:5px;overflow:hidden}
+.pb .tr i{display:block;height:100%}
+.pb span:last-child{width:40px;text-align:right;color:var(--mut)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><h1>Tatame IA</h1><p class="sub">Análise de movimento, técnica e risco de lesão no jiu-jitsu</p></div>
+  <div class="tabs" role="group" aria-label="Fonte">
+    <button id="tSim" aria-pressed="true">Simulação</button>
+    <button id="tUp" aria-pressed="false">Enviar vídeo</button>
+  </div>
+</header>
+
+<div class="main">
+  <section class="card">
+    <div class="stage">
+      <canvas id="cv" width="960" height="540"></canvas>
+      <video id="vd" playsinline controls style="display:none"></video>
+      <div class="toast" id="toast"></div>
+    </div>
+    <div class="ctrl">
+      <button class="btn" id="play">▶ Reproduzir</button>
+      <label class="btn" id="upl" style="display:none">Escolher vídeo<input type="file" id="file" accept="video/*" hidden></label>
+      <button class="btn pri" id="go">Analisar treino</button>
+      <span class="time" id="clock">0:00 / 2:00</span>
+    </div>
+    <div class="tl" id="tl" aria-label="Linha do tempo do treino"></div>
+    <div class="leg" id="leg"></div>
+    <div class="prog" id="prog"><span id="pt">Detectando atletas…</span><div class="bar"><div id="pb"></div></div></div>
+    <p class="note" id="note">Modo simulação: dois atletas em esqueleto animado e eventos de exemplo. A linha do tempo aparece após a análise.</p>
+  </section>
+
+  <aside class="card" id="sum">
+    <h2>Resumo da sessão</h2>
+    <div class="empty" id="empty">Clique em <b>Analisar treino</b> para gerar o painel de desempenho, erros e alertas.</div>
+    <div id="sumc" style="display:none">
+      <div style="display:flex;align-items:flex-end;gap:12px;margin-top:8px"><div class="big" id="score">0</div><div class="sub" style="margin-bottom:6px">nota de execução<br>(0 a 100)</div></div>
+      <div class="score" id="kpis"></div>
+    </div>
+  </aside>
+</div>
+
+<div id="rep">
+  <div class="cols">
+    <section class="card col g"><h2>🟢 Acertos <em id="ng"></em></h2><div id="lg"></div></section>
+    <section class="card col r"><h2>🔴 Erros e ajustes <em id="nr"></em></h2><div id="lr"></div></section>
+    <section class="card col w"><h2>⚠️ Alertas de lesão <em id="nw"></em></h2><div id="lw"></div></section>
+  </div>
+  <div class="row2">
+    <section class="card"><h2>Intensidade ao longo do treino</h2><div id="chart"></div></section>
+    <section class="card"><h2>Tempo por posição</h2><div id="pos"></div></section>
+  </div>
+  <p class="note">Os eventos exibidos são dados demonstrativos: o navegador não executa um modelo real de pose. Em produção, os mesmos cartões seriam alimentados por detecção de pose e regras biomecânicas. Ferramenta de apoio ao treino; não substitui professor, fisioterapeuta ou médico.</p>
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const C={good:'#3ddc97',bad:'#ff5d5d',warn:'#ffb02e'};
+const POS=[
+ {n:'Em pé',a:0,b:.17,c:'#5ac8fa'},{n:'Queda',a:.17,b:.22,c:'#c084fc'},{n:'Guarda',a:.22,b:.5,c:'#3ddc97'},
+ {n:'Passagem',a:.5,b:.6,c:'#ffb02e'},{n:'Montada',a:.6,b:.8,c:'#ff8a5b'},{n:'Costas',a:.8,b:1,c:'#f472b6'}];
+const EV=[
+ {k:'good',t:.08,s:'Queda por single leg',d:'Boa mudança de nível, tronco ereto e cabeça alinhada com a coluna.'},
+ {k:'bad',t:.19,s:'Braço estendido na defesa de queda',d:'Apoio com o cotovelo estendido concentra o impacto em cotovelo e ombro.',f:'Treine rolamento e breakfall lateral, mantendo o braço junto ao corpo.'},
+ {k:'warn',t:.3,s:'Joelho esquerdo: giro com pé fixo',d:'Rotação do quadril com o pé preso ao chão, padrão associado a lesão de menisco e ligamento.',f:'Gire o pé junto com o quadril; se houve dor, pare e procure avaliação.',v:'Alto'},
+ {k:'good',t:.36,s:'Passagem de guarda',d:'Manteve base ampla e controle do quadril durante toda a transição.'},
+ {k:'bad',t:.42,s:'Coluna arredondada sob pressão',d:'Ao ser empilhado, a coluna perdeu a curvatura neutra.',f:'Fortaleça o core e treine fuga de quadril (shrimp).'},
+ {k:'warn',t:.47,s:'Flexão cervical forçada',d:'Pescoço dobrado com carga do oponente por cima.',f:'Use a ponte com apoio dos ombros e peça pausa ao sentir pressão no pescoço.',v:'Médio'},
+ {k:'good',t:.54,s:'Raspagem de tesoura',d:'Sincronia de quadril e puxada de gola, terminando em posição superior.'},
+ {k:'bad',t:.63,s:'Cotovelos abertos na montada',d:'Espaço entre cotovelos e costelas facilita a fuga do oponente.',f:'Mantenha os cotovelos colados ao tronco e a base pesada.'},
+ {k:'warn',t:.7,s:'Cotovelo direito em hiperextensão',d:'Braço travado em extensão total durante o controle.',f:'Evite travar a articulação; mantenha leve flexão sob carga.',v:'Alto'},
+ {k:'good',t:.85,s:'Transição para as costas',d:'Controle de gancho e cabeça firme ao girar para a posição dominante.'},
+ {k:'warn',t:.92,s:'Joelho direito: colapso medial repetido',d:'Joelho caiu para dentro 7 vezes ao longo da sessão, sinal de sobrecarga.',f:'Fortaleça glúteo médio e trabalhe estabilidade de joelho.',v:'Baixo'}];
+const SEV={Alto:'#ff5d5d',Médio:'#ffb02e',Baixo:'#f5d76e'};
+let mode='sim',dur=120,T=0,playing=false,last=0,analyzed=false,useVideo=false;
+const cv=$('cv'),g=cv.getContext('2d'),vd=$('vd');
+const fmt=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
+
+/* ---- esqueleto simulado ---- */
+const pt=(p,l,a)=>[p[0]+l*Math.sin(a),p[1]-l*Math.cos(a)];
+function fig(hip,a,ph,col,hl,scale){
+  const neck=pt(hip,95*scale,a),head=pt(neck,26*scale,a+.1),
+  sh=[pt(neck,0,a)],
+  arm=(s)=>{const e=pt(neck,55*scale,a+Math.PI*.55*s+Math.sin(ph+s)*.5),h=pt(e,50*scale,a+Math.PI*.4*s+Math.cos(ph)*.6);return [e,h]},
+  leg=(s)=>{const k=pt(hip,70*scale,a+Math.PI+.5*s*Math.sin(ph*1.3+s)+.35*s),f=pt(k,68*scale,a+Math.PI+.2*s+Math.cos(ph+s)*.6);return [k,f]};
+  const aL=arm(-1),aR=arm(1),lL=leg(-1),lR=leg(1);
+  g.strokeStyle=col;g.lineWidth=5;g.lineCap='round';g.lineJoin='round';
+  const line=(...p)=>{g.beginPath();g.moveTo(...p[0]);p.slice(1).forEach(q=>g.lineTo(...q));g.stroke()};
+  line(hip,neck);line(neck,aL[0],aL[1]);line(neck,aR[0],aR[1]);line(hip,lL[0],lL[1]);line(hip,lR[0],lR[1]);
+  g.beginPath();g.arc(head[0],head[1],12*scale,0,7);g.stroke();
+  g.fillStyle='#fff';[neck,hip,aL[0],aR[0],lL[0],lR[0],aL[1],aR[1],lL[1],lR[1]].forEach(p=>{g.beginPath();g.arc(p[0],p[1],3.5,0,7);g.fill()});
+  return {kneeL:lL[0],kneeR:lR[0],elbowR:aR[0],neck:neck,elbowL:aL[0]};
+}
+function draw(){
+  const w=cv.width,h=cv.height,f=T/dur,ph=T*3;
+  g.clearRect(0,0,w,h);
+  g.fillStyle='#0d141d';g.fillRect(0,0,w,h);
+  g.fillStyle='#142033';g.fillRect(0,h*.78,w,h*.22);
+  g.strokeStyle='#1f2f45';g.lineWidth=1;for(let x=0;x<w;x+=60){g.beginPath();g.moveTo(x,h*.78);g.lineTo(x-30,h);g.stroke()}
+  const stand=f<.2,ground=h*.78;
+  let a1,b1,aA,aB;
+  if(stand){const m=w/2+Math.sin(ph*.5)*30;a1=[m-70,ground-120];b1=[m+70,ground-120];aA=.25+Math.sin(ph)*.08;aB=-.25-Math.sin(ph)*.08}
+  else{const m=w/2+Math.sin(ph*.4)*25;b1=[m+60,ground-30];aB=Math.PI/2+.12;a1=[m-40,ground-95-Math.sin(ph)*8];aA=.6+Math.sin(ph*.7)*.2}
+  const hot=EV.filter(e=>e.k==='warn'&&Math.abs(e.t-f)<.025);
+  const jb=fig(b1,aB,ph+2,'#ff8a5b',0,1.15);
+  const ja=fig(a1,aA,ph,'#5ac8fa',0,1.15);
+  g.font='600 14px sans-serif';g.fillStyle='#5ac8fa';g.fillText('Atleta A',16,26);g.fillStyle='#ff8a5b';g.fillText('Atleta B',16,46);
+  if(hot.length){const s=hot[0].s,jn=s.includes('Joelho esquerdo')?ja.kneeL:s.includes('Joelho direito')?ja.kneeR:s.includes('Cotovelo')?ja.elbowR:ja.neck;
+    const r=18+Math.sin(T*10)*4;g.strokeStyle='#ff5d5d';g.lineWidth=3;g.beginPath();g.arc(jn[0],jn[1],r,0,7);g.stroke();g.fillStyle='rgba(255,93,93,.25)';g.fill()}
+}
+function toast(){
+  const f=(useVideo?(vd.currentTime/dur):T/dur);
+  const e=analyzed&&EV.find(x=>Math.abs(x.t-f)<.02);
+  const el=$('toast');
+  if(e){el.textContent={good:'🟢 ',bad:'🔴 ',warn:'⚠️ '}[e.k]+e.s;el.style.borderColor=C[e.k];el.classList.add('on')}else el.classList.remove('on');
+}
+function frame(ts){
+  if(playing&&!useVideo){const dt=(ts-last)/1000;T+=dt*2;if(T>=dur){T=dur;playing=false;$('play').textContent='▶ Reproduzir'}}
+  last=ts;if(!useVideo)draw();
+  const cur=useVideo?vd.currentTime:T;
+  $('clock').textContent=fmt(cur)+' / '+fmt(dur);
+  const ph=$('ph');if(ph)ph.style.left=(cur/dur*100)+'%';
+  toast();requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ---- controles ---- */
+$('play').onclick=()=>{
+  if(useVideo){vd.paused?vd.play():vd.pause();return}
+  if(T>=dur)T=0;playing=!playing;$('play').textContent=playing?'❚❚ Pausar':'▶ Reproduzir'};
+function setMode(m){
+  mode=m;$('tSim').setAttribute('aria-pressed',m==='sim');$('tUp').setAttribute('aria-pressed',m==='up');
+  $('upl').style.display=m==='up'?'':'none';
+  useVideo=m==='up'&&!!vd.src;
+  cv.style.display=useVideo?'none':'block';vd.style.display=useVideo?'block':'none';
+  if(!useVideo){dur=120}else dur=vd.duration||120;
+  $('note').textContent=m==='up'?'Envie um vídeo do treino. O vídeo é lido só no seu navegador, nada é enviado a servidores.':'Modo simulação: dois atletas em esqueleto animado e eventos de exemplo.';
+  playing=false;$('play').textContent='▶ Reproduzir';T=0;
+  if(analyzed)buildTL();
+}
+$('tSim').onclick=()=>setMode('sim');$('tUp').onclick=()=>setMode('up');
+$('file').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  vd.src=URL.createObjectURL(f);
+  vd.onloadedmetadata=()=>{dur=vd.duration;useVideo=true;cv.style.display='none';vd.style.display='block';if(analyzed)buildTL()};
+  vd.onerror=()=>{$('note').textContent='Não foi possível ler este vídeo. Tente MP4 (H.264) ou use a simulação.';useVideo=false;vd.removeAttribute('src');setMode('up')};
+  analyzed=false;$('rep').classList.remove('on');$('tl').innerHTML='';$('leg').innerHTML='';
+};
+$('tl').onclick=e=>{
+  if(e.target.closest('.mk'))return;
+  const r=$('tl').getBoundingClientRect();seek((e.clientX-r.left)/r.width);
+};
+function seek(f){f=Math.max(0,Math.min(1,f));if(useVideo)vd.currentTime=f*dur;else T=f*dur}
+
+/* ---- análise ---- */
+const STEPS=['Detectando atletas…','Estimando pose e articulações…','Classificando posições…','Verificando ângulos de risco…','Montando relatório…'];
+$('go').onclick=()=>{
+  if(mode==='up'&&!useVideo){$('note').textContent='Escolha um vídeo antes de analisar, ou volte para a simulação.';return}
+  $('go').disabled=true;$('prog').classList.add('on');let p=0;
+  const iv=setInterval(()=>{p+=2;$('pb').style.width=p+'%';$('pt').textContent=STEPS[Math.min(4,Math.floor(p/20))];
+    if(p>=100){clearInterval(iv);$('prog').classList.remove('on');$('go').disabled=false;$('go').textContent='Analisar novamente';analyzed=true;render()}},45);
+};
+function buildTL(){
+  const tl=$('tl');
+  tl.innerHTML=POS.map(p=>`<div class="seg" style="left:${p.a*100}%;width:${(p.b-p.a)*100}%;background:${p.c}"></div>`).join('')
+   +EV.map((e,i)=>`<button class="mk" data-i="${i}" title="${fmt(e.t*dur)} · ${e.s}" aria-label="${e.s}" style="left:${e.t*100}%;background:${C[e.k]}"></button>`).join('')+'<div class="ph" id="ph"></div>';
+  tl.querySelectorAll('.mk').forEach(b=>b.onclick=()=>{const e=EV[b.dataset.i];seek(e.t);flash(b.dataset.i)});
+  $('leg').innerHTML=POS.map(p=>`<span><i style="background:${p.c}"></i>${p.n}</span>`).join('');
+}
+function flash(i){document.querySelectorAll('.it').forEach(x=>x.classList.toggle('act',x.dataset.i==i));
+  const el=document.querySelector(`.it[data-i="${i}"]`);if(el)el.scrollIntoView({block:'nearest',behavior:'smooth'})}
+function card(e,i){
+  return `<button class="it" data-i="${i}"><span class="t">${fmt(e.t*dur)}${e.v?`<span class="sev" style="background:${SEV[e.v]}">${e.v}</span>`:''}</span><strong>${e.s}</strong><p>${e.d}</p>${e.f?`<div class="fix">${e.f}</div>`:''}</button>`;
+}
+function render(){
+  buildTL();
+  const by=k=>EV.map((e,i)=>({e,i})).filter(x=>x.e.k===k);
+  [['good','lg','ng'],['bad','lr','nr'],['warn','lw','nw']].forEach(([k,l,n])=>{
+    const L=by(k);$(l).innerHTML=L.map(x=>card(x.e,x.i)).join('');$(n).textContent=L.length+' itens'});
+  document.querySelectorAll('.it').forEach(b=>b.onclick=()=>{seek(EV[b.dataset.i].t);flash(b.dataset.i);window.scrollTo({top:0,behavior:'smooth'})});
+  const ng=by('good').length,nb=by('bad').length,hi=by('warn').filter(x=>x.e.v==='Alto').length,nw=by('warn').length;
+  const score=Math.max(0,Math.min(100,Math.round(62+ng*6-nb*4-hi*5-(nw-hi)*2)));
+  $('score').textContent=score;$('score').style.color=score>=75?C.good:score>=55?C.warn:C.bad;
+  $('kpis').innerHTML=[['Duração',fmt(dur)],['Acertos',ng],['Erros',nb],['Alertas',nw]].map(([a,b])=>`<div class="kpi"><b>${b}</b><span>${a}</span></div>`).join('');
+  $('empty').style.display='none';$('sumc').style.display='block';$('rep').classList.add('on');
+  chart();posBars();
+}
+function chart(){
+  const W=640,H=200,n=40,pts=[];
+  for(let i=0;i<n;i++){const f=i/(n-1);const burst=Math.sin(f*17)*.12+Math.sin(f*41)*.06;pts.push(Math.max(.1,.82-f*.38+burst))}
+  const x=i=>30+i*(W-40)/(n-1),y=v=>H-24-v*(H-44);
+  const d=pts.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+','+y(v).toFixed(1)).join('');
+  const dots=EV.filter(e=>e.k==='warn').map(e=>{const i=Math.round(e.t*(n-1));return `<circle cx="${x(i)}" cy="${y(pts[i])}" r="5" fill="${C.warn}" stroke="#111823" stroke-width="2"/>`}).join('');
+  $('chart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Intensidade caindo de cerca de 80% para 45% ao longo do treino">
+  <path d="${d}L${x(n-1)},${H-24}L${x(0)},${H-24}Z" fill="rgba(90,200,250,.14)"/><path d="${d}" fill="none" stroke="#5ac8fa" stroke-width="2.5"/>${dots}
+  <line x1="30" x2="${W-10}" y1="${H-24}" y2="${H-24}" stroke="#212e3f"/>
+  <text x="30" y="${H-6}">0:00</text><text x="${W-40}" y="${H-6}">${fmt(dur)}</text><text x="2" y="${y(.8)+4}">alta</text><text x="2" y="${y(.2)+4}">baixa</text></svg>
+  <p class="sub">A intensidade caiu cerca de 45% do início ao fim, indício de fadiga. Pontos laranja marcam alertas de risco.</p>`;
+}
+function posBars(){
+  $('pos').innerHTML=POS.map(p=>{const pc=Math.round((p.b-p.a)*100);return `<div class="pb"><span>${p.n}</span><div class="tr"><i style="width:${pc*3}%;background:${p.c}"></i></div><span>${pc}%</span></div>`}).join('')
+   +'<p class="sub">Perfil: jogo de guarda e controle de posição, com poucas finalizações.</p>';
+}
+setMode('sim');
+</script>
+</body>
+</html>
